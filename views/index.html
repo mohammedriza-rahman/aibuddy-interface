@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Buddy Assistant</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <button id="menuBtn" class="menu-btn">☰</button>
+            <img src="/images/logo.png" alt="AI-Buddy Logo" class="logo">
+            <h1>AI-Buddy Assistant</h1>
+        </div>
+
+        <div class="main-content">
+            <div class="chat-window">
+                <div class="messages" id="messageContainer">
+                    <div class="message assistant">
+                        <div class="avatar">
+                            <img src="/images/AI-Buddy.png" alt="AI-Buddy">
+                        </div>
+                        <div class="text">Hello! How can I assist you today?</div>
+                    </div>
+                </div>
+                <div class="input-area">
+                    <input type="text" id="messageInput" placeholder="Type your message...">
+                    <button id="sendBtn">→</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <div class="form-container">
+                <h2>Profile Settings</h2>
+                <div class="form-group">
+                    <label>Choose Your Profession:</label>
+                    <select id="professionSelect">
+                        <option value="">Select Profession</option>
+                        <option value="Teacher">Teacher</option>
+                        <option value="Doctor">Doctor</option>
+                        <option value="Engineer">Engineer</option>
+                        <option value="Student">Student</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Choose Your Domain:</label>
+                    <select id="domainSelect">
+                        <option value="">Select Domain</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>About You:</label>
+                    <textarea id="aboutInput" placeholder="Briefly describe your role"></textarea>
+                </div>
+
+                <button id="submitProfile" class="submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+    <script src="/js/app.js"></script>
+</body>
+</html>
