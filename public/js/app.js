@@ -204,7 +204,7 @@ messageInput.addEventListener('keypress', (e) => {
     }
 });
 
-// Handle profile submission
+// Update your submitProfile event listener
 submitProfile.addEventListener('click', async (e) => {
     e.preventDefault();
     
@@ -225,10 +225,13 @@ submitProfile.addEventListener('click', async (e) => {
     const profileMessage = `I am a ${profession} specializing in ${domain}. ${about}`;
     
     try {
-        // First add the user's profile message
+        // Close sidebar first for smooth transition
+        closeSidebar();
+        
+        // Add user message
         addMessage(profileMessage, true);
         
-        // Then show typing indicator
+        // Show typing indicator
         messageContainer.appendChild(typingIndicator);
         typingIndicator.querySelector('.typing-indicator').classList.add('visible');
         messageContainer.scrollTop = messageContainer.scrollHeight;
@@ -245,7 +248,6 @@ submitProfile.addEventListener('click', async (e) => {
             })
         });
         
-        // Remove typing indicator
         if (messageContainer.contains(typingIndicator)) {
             messageContainer.removeChild(typingIndicator);
         }
@@ -255,8 +257,12 @@ submitProfile.addEventListener('click', async (e) => {
         }
         
         const data = await response.json();
-        // Add the response message
+        
+        // Add AI response
         addMessage(data.message);
+        
+        // Focus the chat input after response
+        messageInput.focus();
         
         // Reset form
         professionSelect.value = '';
@@ -269,11 +275,6 @@ submitProfile.addEventListener('click', async (e) => {
             document.getElementById('customDomain').value = '';
         }
         
-        customProfessionContainer.style.display = 'none';
-        customDomainContainer.style.display = 'none';
-        domainSelect.style.display = 'block';
-        
-        closeSidebar();
     } catch (error) {
         console.error('Error:', error);
         if (messageContainer.contains(typingIndicator)) {
@@ -282,7 +283,6 @@ submitProfile.addEventListener('click', async (e) => {
         addMessage('Sorry, I encountered an error submitting your profile.');
     }
 });
-
 
 // Disable send button when input is empty
 messageInput.addEventListener('input', () => {
