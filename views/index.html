@@ -5,12 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI-Buddy Assistant</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <!-- Favicon using AI-Buddy.png -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/AI-Buddy.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/AI-Buddy.png">
+    <link rel="shortcut icon" type="image/png" href="/images/AI-Buddy.png">
+    <link rel="apple-touch-icon" href="/images/AI-Buddy.png">
 </head>
 <body>
     <div class="app-container">
         <div class="header">
             <button id="menuBtn" class="menu-btn">☰</button>
-            <img src=r"public/images/Logo.png" alt="AI-Buddy Logo" class="logo">
+            <!-- Header logo using Logo.png -->
+            <img src="/images/Logo.png" alt="AI-Buddy Logo" class="logo">
             <h1>AI-Buddy Assistant</h1>
         </div>
 
@@ -19,6 +25,7 @@
                 <div class="messages" id="messageContainer">
                     <div class="message assistant">
                         <div class="avatar">
+                            <!-- Message avatar using AI-Buddy.png -->
                             <img src="/images/AI-Buddy.png" alt="AI-Buddy">
                         </div>
                         <div class="text">Hello! How can I assist you today?</div>
@@ -26,7 +33,7 @@
                 </div>
                 <div class="input-area">
                     <input type="text" id="messageInput" placeholder="Type your message...">
-                    <button id="sendBtn">→</button>
+                    <button id="sendBtn" disabled>→</button>
                 </div>
             </div>
         </div>
@@ -36,7 +43,7 @@
                 <h2>Profile Settings</h2>
                 <div class="form-group">
                     <label>Choose Your Profession:</label>
-                    <select id="professionSelect">
+                    <select id="professionSelect" required>
                         <option value="">Select Profession</option>
                         <option value="Teacher">Teacher</option>
                         <option value="Doctor">Doctor</option>
@@ -48,14 +55,14 @@
 
                 <div class="form-group">
                     <label>Choose Your Domain:</label>
-                    <select id="domainSelect">
+                    <select id="domainSelect" required>
                         <option value="">Select Domain</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>About You:</label>
-                    <textarea id="aboutInput" placeholder="Briefly describe your role"></textarea>
+                    <textarea id="aboutInput" placeholder="Briefly describe your role" required></textarea>
                 </div>
 
                 <button id="submitProfile" class="submit-btn">Submit</button>
