@@ -80,7 +80,7 @@ body {
     margin: 0 10px;
     overflow: hidden; /* Add this to ensure the image stays within the circular boundary */
     display: flex;
-    align-items: center;
+    align-items: left;
     justify-content: center;
     background: white; /* Change from #FFD700 to white */
 }
@@ -246,7 +246,7 @@ body {
 
 .text {
     background: #f0f0f0;
-    padding: 10px;
+    padding: 8px;
     border-radius: 15px;
     max-width: 70%;
 }
