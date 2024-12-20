@@ -53,36 +53,6 @@ typingIndicator.innerHTML = `
     </div>
 `;
 
-// Format text with proper spacing and structure
-function formatText(text) {
-    // First, split the text into sections
-    const sections = text.split(/(?=\d+\.)/).map(section => section.trim());
-    
-    return sections.map(section => {
-        // Handle each section
-        const lines = section.split('\n').map(line => line.trim()).filter(line => line);
-        let formattedSection = '';
-        
-        lines.forEach((line, index) => {
-            // Main section header (numbered)
-            if (index === 0 && /^\d+\./.test(line)) {
-                formattedSection += line + '\n';
-            }
-            // Bullet points (lines starting with * or •)
-            else if (line.startsWith('*') || line.startsWith('•')) {
-                const cleanLine = line.replace(/^[\*•]+\s*/, '').trim();
-                formattedSection += `• ${cleanLine}\n`;
-            }
-            // Regular text or continuation
-            else {
-                formattedSection += line + '\n';
-            }
-        });
-        
-        return formattedSection;
-    }).join('\n').trim();
-}
-
 // Toggle Sidebar
 function closeSidebar() {
     sidebar.classList.remove('open');
@@ -118,8 +88,10 @@ professionSelect.addEventListener('change', () => {
     const profession = professionSelect.value;
     const domains = PROFESSION_DOMAINS[profession] || [];
     
+    // Show/hide custom profession input
     customProfessionContainer.style.display = profession === 'Other' ? 'block' : 'none';
     
+    // Reset and update domain select
     domainSelect.innerHTML = '<option value="">Select Domain</option>';
     domains.forEach(domain => {
         const option = document.createElement('option');
@@ -128,6 +100,7 @@ professionSelect.addEventListener('change', () => {
         domainSelect.appendChild(option);
     });
     
+    // Update visibility
     if (profession === 'Other') {
         domainSelect.style.display = 'none';
         customProfessionContainer.style.display = 'block';
@@ -138,6 +111,17 @@ professionSelect.addEventListener('change', () => {
         customDomainContainer.style.display = 'none';
     }
 });
+
+// Format text
+function formatText(text) {
+    const paragraphs = text.split(/\*|\n/).map(p => p.trim()).filter(p => p.length > 0);
+    return paragraphs.map(paragraph => {
+        if (paragraph.includes(":") || /^\d+\./.test(paragraph)) {
+            return `• ${paragraph}`;
+        }
+        return paragraph;
+    }).join('\n\n');
+}
 
 // Add message to chat
 function addMessage(text, isUser = false) {
