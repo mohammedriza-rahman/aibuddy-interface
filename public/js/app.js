@@ -53,6 +53,36 @@ typingIndicator.innerHTML = `
     </div>
 `;
 
+// Format text with proper spacing and structure
+function formatText(text) {
+    // First, split the text into sections
+    const sections = text.split(/(?=\d+\.)/).map(section => section.trim());
+    
+    return sections.map(section => {
+        // Handle each section
+        const lines = section.split('\n').map(line => line.trim()).filter(line => line);
+        let formattedSection = '';
+        
+        lines.forEach((line, index) => {
+            // Main section header (numbered)
+            if (index === 0 && /^\d+\./.test(line)) {
+                formattedSection += line + '\n';
+            }
+            // Bullet points (lines starting with * or •)
+            else if (line.startsWith('*') || line.startsWith('•')) {
+                const cleanLine = line.replace(/^[\*•]+\s*/, '').trim();
+                formattedSection += `• ${cleanLine}\n`;
+            }
+            // Regular text or continuation
+            else {
+                formattedSection += line + '\n';
+            }
+        });
+        
+        return formattedSection;
+    }).join('\n').trim();
+}
+
 // Toggle Sidebar
 function closeSidebar() {
     sidebar.classList.remove('open');
@@ -108,41 +138,6 @@ professionSelect.addEventListener('change', () => {
         customDomainContainer.style.display = 'none';
     }
 });
-
-// Format text with proper line breaks and bullets
-function formatText(text) {
-    // Split text into lines
-    const lines = text
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
-
-    // Process each line
-    const formattedLines = lines.map(line => {
-        // Check for numbered points (e.g., "1.")
-        if (/^\d+\./.test(line)) {
-            return line; // Keep original numbering
-        }
-        // Check for bullet points or sections with colons
-        if (line.startsWith('*') || line.includes(':')) {
-            // Remove asterisk if present and trim
-            const cleanLine = line.startsWith('*') ? line.substring(1).trim() : line;
-            // Add bullet point
-            return `• ${cleanLine}`;
-        }
-        return line;
-    });
-
-    // Join lines with appropriate spacing
-    return formattedLines.map((line, index) => {
-        // Add extra space before new sections (lines with bullets or numbers)
-        if (index > 0 && (line.startsWith('•') || /^\d+\./.test(line)) && 
-            !formattedLines[index - 1].startsWith('•') && !/^\d+\./.test(formattedLines[index - 1])) {
-            return `\n${line}`;
-        }
-        return line;
-    }).join('\n');
-}
 
 // Add message to chat
 function addMessage(text, isUser = false) {
