@@ -88,10 +88,8 @@ professionSelect.addEventListener('change', () => {
     const profession = professionSelect.value;
     const domains = PROFESSION_DOMAINS[profession] || [];
     
-    // Show/hide custom profession input
     customProfessionContainer.style.display = profession === 'Other' ? 'block' : 'none';
     
-    // Reset and update domain select
     domainSelect.innerHTML = '<option value="">Select Domain</option>';
     domains.forEach(domain => {
         const option = document.createElement('option');
@@ -100,7 +98,6 @@ professionSelect.addEventListener('change', () => {
         domainSelect.appendChild(option);
     });
     
-    // Update visibility
     if (profession === 'Other') {
         domainSelect.style.display = 'none';
         customProfessionContainer.style.display = 'block';
@@ -112,15 +109,39 @@ professionSelect.addEventListener('change', () => {
     }
 });
 
-// Format text
+// Format text with proper line breaks and bullets
 function formatText(text) {
-    const paragraphs = text.split(/\*|\n/).map(p => p.trim()).filter(p => p.length > 0);
-    return paragraphs.map(paragraph => {
-        if (paragraph.includes(":") || /^\d+\./.test(paragraph)) {
-            return `• ${paragraph}`;
+    // Split text into lines
+    const lines = text
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+
+    // Process each line
+    const formattedLines = lines.map(line => {
+        // Check for numbered points (e.g., "1.")
+        if (/^\d+\./.test(line)) {
+            return line; // Keep original numbering
         }
-        return paragraph;
-    }).join('\n\n');
+        // Check for bullet points or sections with colons
+        if (line.startsWith('*') || line.includes(':')) {
+            // Remove asterisk if present and trim
+            const cleanLine = line.startsWith('*') ? line.substring(1).trim() : line;
+            // Add bullet point
+            return `• ${cleanLine}`;
+        }
+        return line;
+    });
+
+    // Join lines with appropriate spacing
+    return formattedLines.map((line, index) => {
+        // Add extra space before new sections (lines with bullets or numbers)
+        if (index > 0 && (line.startsWith('•') || /^\d+\./.test(line)) && 
+            !formattedLines[index - 1].startsWith('•') && !/^\d+\./.test(formattedLines[index - 1])) {
+            return `\n${line}`;
+        }
+        return line;
+    }).join('\n');
 }
 
 // Add message to chat
