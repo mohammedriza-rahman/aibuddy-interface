@@ -123,16 +123,16 @@ function formatText(text) {
     lines.forEach(line => {
         // Handle numbered sections
         if (/^\d+\./.test(line)) {
-            formattedText += `• ${line.replace(/^\d+\.\s*/, '')}\n`;
+            formattedText += `• ${line.replace(/^\d+\.\s*/, '')}\n\n`;
         }
         // Handle bullet points or subheadings
         else if (line.startsWith('*') || line.includes(':')) {
             const cleanLine = line.replace(/^\*+\s*/, '').replace(/\*\*/g, '').trim();
-            formattedText += `• ${cleanLine}\n`;
+            formattedText += `• ${cleanLine}\n\n`;
         }
         // Handle regular text
         else {
-            formattedText += `${line.replace(/\*\*/g, '')}\n`;
+            formattedText += `${line.replace(/\*\*/g, '')}\n\n`;
         }
     });
 
