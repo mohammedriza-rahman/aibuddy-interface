@@ -5,8 +5,12 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Open Sans', sans-serif;
     background-color: #f5f5f5;
+}
+
+h1, h2, h3 {
+    font-family: 'Varela Round', sans-serif;
 }
 
 .app-container {
@@ -98,7 +102,7 @@ body {
     padding: 8px 12px;
     border-radius: 12px;
     max-width: 75%;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.4;
     white-space: pre-wrap;
     word-break: break-word;
