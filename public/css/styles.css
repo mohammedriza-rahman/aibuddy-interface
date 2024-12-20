@@ -27,6 +27,8 @@ h1, h2, h3 {
     position: relative;
 }
 
+
+
 .logo {
     height: 40px; /* Reduced from 60px */
     margin: 8px 0;
@@ -103,9 +105,15 @@ h1, h2, h3 {
     border-radius: 12px;
     max-width: 75%;
     font-size: 14px;
-    line-height: 1.4;
+    line-height: 1.8;
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+/* Add spacing between bullet points */
+.message .text p, 
+.message .text li {
+    margin-bottom: 10px;
 }
 
 .message.user .text {
