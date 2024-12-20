@@ -1,9 +1,9 @@
 // Constants
 const PROFESSION_DOMAINS = {
-    "Teacher": ["Mathematics", "Science", "English", "History", "Computer Science", "Other"],
-    "Doctor": ["General Medicine", "Pediatrics", "Cardiology", "Neurology", "Surgery", "Other"],
-    "Engineer": ["Software", "Civil", "Mechanical", "Electrical", "Chemical", "Other"],
-    "Student": ["High School", "Undergraduate", "Graduate", "PhD", "Other"],
+    "Teacher": ["Mathematics", "Science", "English", "History", "Computer Science"],
+    "Doctor": ["General Medicine", "Pediatrics", "Cardiology", "Neurology", "Surgery"],
+    "Engineer": ["Software", "Civil", "Mechanical", "Electrical", "Chemical"],
+    "Student": ["High School", "Undergraduate", "Graduate", "PhD"],
     "Other": ["Other"]
 };
 
@@ -35,11 +35,11 @@ customDomainContainer.innerHTML = `
     <input type="text" id="customDomain" placeholder="Enter your domain">
 `;
 
-// Insert custom input fields
+// Insert custom input fields after the respective select elements
 domainSelect.parentNode.after(customDomainContainer);
 professionSelect.parentNode.after(customProfessionContainer);
 
-// Create typing indicator
+// Create typing indicator element
 const typingIndicator = document.createElement('div');
 typingIndicator.className = 'message assistant';
 typingIndicator.innerHTML = `
@@ -77,13 +77,7 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Domain selection change handler
-domainSelect.addEventListener('change', () => {
-    const selectedDomain = domainSelect.value;
-    customDomainContainer.style.display = selectedDomain === 'Other' ? 'block' : 'none';
-});
-
-// Profession selection change handler
+// Update domains when profession changes
 professionSelect.addEventListener('change', () => {
     const profession = professionSelect.value;
     const domains = PROFESSION_DOMAINS[profession] || [];
@@ -100,59 +94,31 @@ professionSelect.addEventListener('change', () => {
         domainSelect.appendChild(option);
     });
     
-    // Update visibility
+    // Show/hide custom domain input based on domain selection
     if (profession === 'Other') {
         domainSelect.style.display = 'none';
-        customProfessionContainer.style.display = 'block';
         customDomainContainer.style.display = 'block';
     } else {
         domainSelect.style.display = 'block';
-        customProfessionContainer.style.display = 'none';
         customDomainContainer.style.display = 'none';
     }
 });
 
-// Format text
+// Format text with proper line breaks and bullets
 function formatText(text) {
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    let formattedText = '';
-
-    lines.forEach(line => {
-        // Handle numbered sections
-        if (/^\d+\./.test(line)) {
-            formattedText += '\n• ' + line.replace(/^\d+\.\s*/, '') + '\n';
+    const paragraphs = text.split(/\*|\n/).map(p => p.trim()).filter(p => p.length > 0);
+    return paragraphs.map(paragraph => {
+        if (paragraph.includes(":") || /^\d+\./.test(paragraph)) {
+            return • ${paragraph};
         }
-        // Handle starred points
-        else if (line.startsWith('*')) {
-            const cleanLine = line.replace(/^\*+\s*/, '').trim();
-            // Remove any "**" patterns from the text
-            const finalLine = cleanLine.replace(/\*\*/g, '');
-            formattedText += '• ' + finalLine + '\n';
-        }
-        // Handle regular text
-        else {
-            // Remove any "**" patterns from the text
-            const cleanLine = line.replace(/\*\*/g, '');
-            formattedText += cleanLine + '\n';
-        }
-    });
-
-    // Clean up formatting
-    return formattedText
-        .replace(/\n{3,}/g, '\n')  // Replace multiple newlines with single newline
-        .replace(/^\n+/, '')       // Remove leading newlines
-        .trim();                   // Remove trailing whitespace
-}
-    // Clean up any double spacing that might have occurred
-    return formattedText
-        .replace(/\n\s*\n/g, '\n')  // Replace multiple newlines with single newline
-        .trim();                     // Remove trailing whitespace
+        return paragraph;
+    }).join('\n\n');
 }
 
 // Add message to chat
 function addMessage(text, isUser = false) {
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+    messageDiv.className = message ${isUser ? 'user' : 'assistant'};
     
     if (!isUser) {
         const avatar = document.createElement('div');
@@ -179,9 +145,6 @@ function addMessage(text, isUser = false) {
 async function sendMessage(message, isProfile = false) {
     if (!message.trim()) return;
     
-    messageInput.value = '';
-    sendBtn.disabled = true;
-    
     addMessage(message, true);
     messageContainer.appendChild(typingIndicator);
     typingIndicator.querySelector('.typing-indicator').classList.add('visible');
@@ -197,14 +160,9 @@ async function sendMessage(message, isProfile = false) {
                 profession: professionSelect.value === 'Other' ? 
                     document.getElementById('customProfession').value : 
                     professionSelect.value,
-                domain: (() => {
-                    if (professionSelect.value === 'Other') {
-                        return document.getElementById('customDomain').value;
-                    }
-                    return domainSelect.value === 'Other' ? 
-                        document.getElementById('customDomain').value : 
-                        domainSelect.value;
-                })(),
+                domain: professionSelect.value === 'Other' ? 
+                    document.getElementById('customDomain').value : 
+                    domainSelect.value,
                 description: aboutInput.value
             } : { message })
         });
@@ -233,30 +191,30 @@ sendBtn.addEventListener('click', () => {
     const message = messageInput.value.trim();
     if (message) {
         sendMessage(message);
+        messageInput.value = '';
+        sendBtn.disabled = true;
     }
 });
 
 messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && messageInput.value.trim()) {
         sendMessage(messageInput.value);
+        messageInput.value = '';
+        sendBtn.disabled = true;
     }
 });
 
-// Handle profile submission
+// Update your submitProfile event listener
 submitProfile.addEventListener('click', async (e) => {
     e.preventDefault();
     
-    const isOtherProfession = professionSelect.value === 'Other';
-    const isOtherDomain = domainSelect.value === 'Other';
-    
-    const profession = isOtherProfession ? 
+    const isOtherSelected = professionSelect.value === 'Other';
+    const profession = isOtherSelected ? 
         document.getElementById('customProfession').value : 
         professionSelect.value;
-    
-    const domain = isOtherProfession ? 
-        document.getElementById('customDomain').value :
-        (isOtherDomain ? document.getElementById('customDomain').value : domainSelect.value);
-    
+    const domain = isOtherSelected ? 
+        document.getElementById('customDomain').value : 
+        domainSelect.value;
     const about = aboutInput.value;
 
     if (!profession || !domain) {
@@ -264,12 +222,16 @@ submitProfile.addEventListener('click', async (e) => {
         return;
     }
 
-    const profileMessage = `I am a ${profession} specializing in ${domain}. ${about}`;
+    const profileMessage = I am a ${profession} specializing in ${domain}. ${about};
     
     try {
+        // Close sidebar first for smooth transition
         closeSidebar();
+        
+        // Add user message
         addMessage(profileMessage, true);
         
+        // Show typing indicator
         messageContainer.appendChild(typingIndicator);
         typingIndicator.querySelector('.typing-indicator').classList.add('visible');
         messageContainer.scrollTop = messageContainer.scrollHeight;
@@ -295,17 +257,17 @@ submitProfile.addEventListener('click', async (e) => {
         }
         
         const data = await response.json();
+        
+        // Add AI response
         addMessage(data.message);
         
+        // Focus the chat input after response
         messageInput.focus();
         
         // Reset form
         professionSelect.value = '';
         domainSelect.innerHTML = '<option value="">Select Domain</option>';
         aboutInput.value = '';
-        customProfessionContainer.style.display = 'none';
-        customDomainContainer.style.display = 'none';
-        
         if (document.getElementById('customProfession')) {
             document.getElementById('customProfession').value = '';
         }
