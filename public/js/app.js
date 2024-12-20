@@ -128,7 +128,7 @@ function formatText(text) {
         // Handle bullet points or subheadings
         else if (line.startsWith('*') || line.includes(':')) {
             const cleanLine = line.replace(/^\*+\s*/, '').replace(/\*\*/g, '').trim();
-            formattedText += `• ${cleanLine}\n\n`;
+            formattedText += `• ${cleanLine}\n`;
         }
         // Handle regular text
         else {
