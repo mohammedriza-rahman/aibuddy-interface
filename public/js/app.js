@@ -116,25 +116,33 @@ professionSelect.addEventListener('change', () => {
 function formatText(text) {
     const lines = text.split('\n').map(line => line.trim()).filter(line => line);
     let formattedText = '';
-    let isFirstSection = true;
 
     lines.forEach(line => {
-        // Handle numbered sections (e.g., "1.")
+        // Handle numbered sections
         if (/^\d+\./.test(line)) {
-            formattedText += (isFirstSection ? '' : '\n') + line + '\n';
-            isFirstSection = false;
+            formattedText += '\n• ' + line.replace(/^\d+\.\s*/, '') + '\n';
         }
-        // Handle bullet points or subheadings with colons
-        else if (line.startsWith('*') || line.includes(':')) {
+        // Handle starred points
+        else if (line.startsWith('*')) {
             const cleanLine = line.replace(/^\*+\s*/, '').trim();
-            formattedText += '• ' + cleanLine + '\n';
+            // Remove any "**" patterns from the text
+            const finalLine = cleanLine.replace(/\*\*/g, '');
+            formattedText += '• ' + finalLine + '\n';
         }
         // Handle regular text
         else {
-            formattedText += line + '\n';
+            // Remove any "**" patterns from the text
+            const cleanLine = line.replace(/\*\*/g, '');
+            formattedText += cleanLine + '\n';
         }
     });
 
+    // Clean up formatting
+    return formattedText
+        .replace(/\n{3,}/g, '\n')  // Replace multiple newlines with single newline
+        .replace(/^\n+/, '')       // Remove leading newlines
+        .trim();                   // Remove trailing whitespace
+}
     // Clean up any double spacing that might have occurred
     return formattedText
         .replace(/\n\s*\n/g, '\n')  // Replace multiple newlines with single newline
