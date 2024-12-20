@@ -114,13 +114,31 @@ professionSelect.addEventListener('change', () => {
 
 // Format text
 function formatText(text) {
-    const paragraphs = text.split(/\*|\n/).map(p => p.trim()).filter(p => p.length > 0);
-    return paragraphs.map(paragraph => {
-        if (paragraph.includes(":") || /^\d+\./.test(paragraph)) {
-            return `• ${paragraph}`;
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    let formattedText = '';
+    let isFirstSection = true;
+
+    lines.forEach(line => {
+        // Handle numbered sections (e.g., "1.")
+        if (/^\d+\./.test(line)) {
+            formattedText += (isFirstSection ? '' : '\n') + line + '\n';
+            isFirstSection = false;
         }
-        return paragraph;
-    }).join('\n\n');
+        // Handle bullet points or subheadings with colons
+        else if (line.startsWith('*') || line.includes(':')) {
+            const cleanLine = line.replace(/^\*+\s*/, '').trim();
+            formattedText += '• ' + cleanLine + '\n';
+        }
+        // Handle regular text
+        else {
+            formattedText += line + '\n';
+        }
+    });
+
+    // Clean up any double spacing that might have occurred
+    return formattedText
+        .replace(/\n\s*\n/g, '\n')  // Replace multiple newlines with single newline
+        .trim();                     // Remove trailing whitespace
 }
 
 // Add message to chat
