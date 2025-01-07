@@ -54,6 +54,7 @@ h1, h2, h3 {
 }
 
 .chat-window {
+    position: relative;
     width: 100%;
     max-width: 800px;
     background: white;
@@ -64,6 +65,7 @@ h1, h2, h3 {
 }
 
 .messages {
+    scroll-behavior: smooth;
     flex: 1;
     padding: 15px;
     overflow-y: auto;
@@ -109,6 +111,41 @@ h1, h2, h3 {
     white-space: pre-wrap;
     word-break: break-word;
 }
+
+
+/* Scroll to bottom button styles */
+.scroll-bottom {
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    background: #147676;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    font-size: 20px;
+    font-family: 'Varela Round', sans-serif;
+    transition: all 0.3s ease;
+    z-index: 100;
+    opacity: 0.9;
+}
+
+.scroll-bottom.visible {
+    display: flex;
+}
+
+.scroll-bottom:hover {
+    background: #1a8f8f;
+    transform: translateY(-2px);
+    opacity: 1;
+}
+
 
 /* Add spacing between bullet points */
 .message .text p, 
