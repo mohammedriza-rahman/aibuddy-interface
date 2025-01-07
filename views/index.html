@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI-Buddy Assistant</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&family=Varela+Round&display=swap" rel="stylesheet">
+    <!-- Styles -->
     <link rel="stylesheet" href="/css/styles.css">
-    <!-- Favicon using AI-Buddy.png -->
+    <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/images/AI-Buddy.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/images/AI-Buddy.png">
     <link rel="shortcut icon" type="image/png" href="/images/AI-Buddy.png">
@@ -13,31 +18,41 @@
 </head>
 <body>
     <div class="app-container">
+        <!-- Header -->
         <div class="header">
             <button id="menuBtn" class="menu-btn">☰</button>
-            <!-- Header logo using Logo.png -->
             <img src="/images/Logo.png" alt="AI-Buddy Logo" class="logo">
             <h1>AI-Buddy Assistant</h1>
         </div>
 
+        <!-- Main Chat Area -->
         <div class="main-content">
             <div class="chat-window">
                 <div class="messages" id="messageContainer">
                     <div class="message assistant">
                         <div class="avatar">
-                            <!-- Message avatar using AI-Buddy.png -->
                             <img src="/images/AI-Buddy.png" alt="AI-Buddy">
                         </div>
-                        <div class="text">Hello! How can I assist you today?</div>
+                        <div class="text streaming">Hello! How can I assist you today?</div>
                     </div>
                 </div>
+                <!-- Add scroll to bottom button -->
+                <button id="scrollBottomBtn" class="scroll-bottom" aria-label="Scroll to bottom">
+                    ↓
+                </button>
                 <div class="input-area">
-                    <input type="text" id="messageInput" placeholder="Type your message...">
-                    <button id="sendBtn" disabled>→</button>
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        placeholder="Type your message..."
+                        aria-label="Message input"
+                    >
+                    <button id="sendBtn" disabled aria-label="Send message">→</button>
                 </div>
             </div>
         </div>
 
+        <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="form-container">
                 <h2>Discover AI in Your Profession</h2>
@@ -47,7 +62,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Choose Your Profession:</label>
+                    <label for="professionSelect">Choose Your Profession:</label>
                     <select id="professionSelect" required>
                         <option value="">Select Your Field</option>
                         <option value="Teacher">Teacher</option>
@@ -59,21 +74,29 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Choose Your Domain:</label>
+                    <label for="domainSelect">Choose Your Domain:</label>
                     <select id="domainSelect" required>
                         <option value="">Select Your Specialty</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>What would you like to know?</label>
-                    <textarea id="aboutInput" placeholder="Example: How can AI help me be more efficient in my role? What AI tools are relevant for my field?" required></textarea>
+                    <label for="aboutInput">What would you like to know?</label>
+                    <textarea 
+                        id="aboutInput" 
+                        placeholder="Example: How can AI help me be more efficient in my role? What AI tools are relevant for my field?" 
+                        required
+                    ></textarea>
                 </div>
 
-                <button id="submitProfile" class="submit-btn">Get AI Insights →</button>
+                <button id="submitProfile" class="submit-btn">
+                    Get AI Insights <span class="btn-arrow">→</span>
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Scripts -->
     <script src="/js/app.js"></script>
 </body>
 </html>
