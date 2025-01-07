@@ -17,6 +17,27 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const messageContainer = document.getElementById('messageContainer');
 const aboutInput = document.getElementById('aboutInput');
+const scrollUpBtn = document.getElementById('scrollUpBtn');
+const scrollDownBtn = document.getElementById('scrollDownBtn');
+const messagesDiv = document.getElementById('messageContainer');
+
+// Show/hide scroll buttons based on scroll position
+messagesDiv.addEventListener('scroll', () => {
+    const { scrollTop, scrollHeight, clientHeight } = messagesDiv;
+    scrollUpBtn.style.display = scrollTop > 100 ? 'block' : 'none';
+    scrollDownBtn.style.display = scrollTop + clientHeight < scrollHeight - 100 ? 'block' : 'none';
+});
+
+// Scroll to top
+scrollUpBtn.addEventListener('click', () => {
+    messagesDiv.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// Scroll to bottom
+scrollDownBtn.addEventListener('click', () => {
+    messagesDiv.scrollTo({ top: messagesDiv.scrollHeight, behavior: 'smooth' });
+});
+
 
 // Debug log
 console.log('DOM Elements loaded:', {
