@@ -7,6 +7,10 @@ const PROFESSION_DOMAINS = {
     "Other": ["Other"]
 };
 
+// State variables
+let isStreaming = false;
+let currentStreamingMessage = null;
+
 // DOM Elements
 const sidebar = document.getElementById('sidebar');
 const menuBtn = document.getElementById('menuBtn');
@@ -17,11 +21,12 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const messageContainer = document.getElementById('messageContainer');
 const aboutInput = document.getElementById('aboutInput');
+const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
 // Debug log
 console.log('DOM Elements loaded:', {
     sidebar, menuBtn, professionSelect, domainSelect,
-    submitProfile, messageInput, sendBtn, messageContainer, aboutInput
+    submitProfile, messageInput, sendBtn, messageContainer, aboutInput, scrollBottomBtn
 });
 
 // Create custom input containers
@@ -41,11 +46,11 @@ customDomainContainer.innerHTML = `
     <input type="text" id="customDomain" placeholder="Enter your domain">
 `;
 
-// Insert custom input fields after the respective select elements
+// Insert custom input fields
 domainSelect.parentNode.after(customDomainContainer);
 professionSelect.parentNode.after(customProfessionContainer);
 
-// Create typing indicator element
+// Create typing indicator
 const typingIndicator = document.createElement('div');
 typingIndicator.className = 'message assistant';
 typingIndicator.innerHTML = `
@@ -58,6 +63,61 @@ typingIndicator.innerHTML = `
         <div class="dot"></div>
     </div>
 `;
+
+// Scroll functions
+function checkScroll() {
+    const { scrollTop, scrollHeight, clientHeight } = messageContainer;
+    const scrolledFromBottom = scrollHeight - scrollTop - clientHeight;
+    
+    if (scrolledFromBottom > 100) {
+        scrollBottomBtn.classList.add('visible');
+    } else {
+        scrollBottomBtn.classList.remove('visible');
+    }
+}
+
+function scrollToBottom() {
+    messageContainer.scrollTop = messageContainer.scrollHeight;
+    checkScroll();
+}
+
+messageContainer.addEventListener('scroll', checkScroll);
+scrollBottomBtn.addEventListener('click', scrollToBottom);
+window.addEventListener('resize', checkScroll);
+
+// Text streaming function
+function streamText(text, textDiv) {
+    return new Promise((resolve) => {
+        if (currentStreamingMessage) {
+            currentStreamingMessage.classList.remove('streaming');
+        }
+        isStreaming = true;
+        currentStreamingMessage = textDiv;
+        
+        const delay = 20;
+        let index = 0;
+        textDiv.textContent = '';
+        textDiv.classList.add('streaming');
+        
+        function addNextCharacter() {
+            if (index < text.length && isStreaming) {
+                textDiv.textContent += text[index];
+                index++;
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+                checkScroll();
+                setTimeout(addNextCharacter, delay);
+            } else {
+                textDiv.classList.remove('streaming');
+                isStreaming = false;
+                currentStreamingMessage = null;
+                checkScroll();
+                resolve();
+            }
+        }
+        
+        addNextCharacter();
+    });
+}
 
 // Toggle Sidebar
 function closeSidebar() {
@@ -123,7 +183,7 @@ function formatText(text) {
     lines.forEach(line => {
         // Handle numbered sections
         if (/^\d+\./.test(line)) {
-            formattedText += `• ${line.replace(/^\d+\.\s*/, '')}\n\n`;
+            formattedText += `• ${line.replace(/^\d+\.\s*/, '')}\n`;
         }
         // Handle bullet points or subheadings
         else if (line.startsWith('*') || line.includes(':')) {
@@ -132,7 +192,7 @@ function formatText(text) {
         }
         // Handle regular text
         else {
-            formattedText += `${line.replace(/\*\*/g, '')}\n\n`;
+            formattedText += `${line.replace(/\*\*/g, '')}\n`;
         }
     });
 
@@ -140,7 +200,13 @@ function formatText(text) {
 }
 
 // Add message to chat
-function addMessage(text, isUser = false) {
+async function addMessage(text, isUser = false) {
+    // Cancel any ongoing streaming
+    isStreaming = false;
+    if (currentStreamingMessage) {
+        currentStreamingMessage.classList.remove('streaming');
+    }
+
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
     
@@ -158,24 +224,42 @@ function addMessage(text, isUser = false) {
     textDiv.className = 'text';
     textDiv.style.whiteSpace = 'pre-wrap';
     textDiv.style.wordBreak = 'break-word';
-    textDiv.textContent = isUser ? text : formatText(text);
     
     messageDiv.appendChild(textDiv);
     messageContainer.appendChild(messageDiv);
-    messageContainer.scrollTop = messageContainer.scrollHeight;
+    checkScroll();
+
+    if (isUser) {
+        textDiv.textContent = text;
+        scrollToBottom();
+    } else {
+        const formattedText = formatText(text);
+        await streamText(formattedText, textDiv);
+        scrollToBottom();
+    }
 }
 
 // Handle sending messages
 async function sendMessage(message, isProfile = false) {
     if (!message.trim()) return;
     
+    // Cancel any ongoing streaming
+    isStreaming = false;
+    if (currentStreamingMessage) {
+        currentStreamingMessage.classList.remove('streaming');
+    }
+
     messageInput.value = '';
     sendBtn.disabled = true;
     
-    addMessage(message, true);
+    // Remove any existing typing indicators
+    const existingIndicators = messageContainer.querySelectorAll('.typing-indicator');
+    existingIndicators.forEach(indicator => indicator.remove());
+    
+    await addMessage(message, true);
     messageContainer.appendChild(typingIndicator);
     typingIndicator.querySelector('.typing-indicator').classList.add('visible');
-    messageContainer.scrollTop = messageContainer.scrollHeight;
+    scrollToBottom();
     
     try {
         const response = await fetch(isProfile ? '/api/profile' : '/api/chat', {
@@ -208,13 +292,13 @@ async function sendMessage(message, isProfile = false) {
         }
         
         const data = await response.json();
-        addMessage(data.message);
+        await addMessage(data.message);
     } catch (error) {
         console.error('Error:', error);
         if (messageContainer.contains(typingIndicator)) {
             messageContainer.removeChild(typingIndicator);
         }
-        addMessage('Sorry, I encountered an error. Please try again.');
+        await addMessage('Sorry, I encountered an error. Please try again.');
     }
 }
 
@@ -256,11 +340,11 @@ submitProfile.addEventListener('click', async (e) => {
     
     try {
         closeSidebar();
-        addMessage(profileMessage, true);
+        await addMessage(profileMessage, true);
         
         messageContainer.appendChild(typingIndicator);
         typingIndicator.querySelector('.typing-indicator').classList.add('visible');
-        messageContainer.scrollTop = messageContainer.scrollHeight;
+        scrollToBottom();
         
         const response = await fetch('/api/profile', {
             method: 'POST',
@@ -283,7 +367,7 @@ submitProfile.addEventListener('click', async (e) => {
         }
         
         const data = await response.json();
-        addMessage(data.message);
+        await addMessage(data.message);
         messageInput.focus();
         
         // Reset form
@@ -305,7 +389,7 @@ submitProfile.addEventListener('click', async (e) => {
         if (messageContainer.contains(typingIndicator)) {
             messageContainer.removeChild(typingIndicator);
         }
-        addMessage('Sorry, I encountered an error submitting your profile.');
+        await addMessage('Sorry, I encountered an error submitting your profile.');
     }
 });
 
