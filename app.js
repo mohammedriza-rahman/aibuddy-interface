@@ -7,13 +7,11 @@ const app = express();
 const PORT = 3000;
 
 // Dify API configuration
-const API_KEY = "app-D2IMY0lIHOB3crQGFLfYIpLW";
+const API_KEY = "your_dify_api_key_here";
 const API_BASE_URL = "https://api.dify.ai/v1";
 
 // Store conversation history
-let conversationHistory = [
-    { role: "assistant", content: "Hello! How can I assist you today?" }
-];
+let conversationId = "";
 
 // Middleware
 app.use(express.static('public'));
@@ -22,19 +20,7 @@ app.use(bodyParser.json());
 // Chat endpoint
 app.post('/api/chat', async (req, res) => {
     try {
-        const { message, userId } = req.body;
-
-        // Add user message to history
-        conversationHistory.push({ role: "user", content: message });
-
-        // Prepare the request payload for Dify
-        const payload = {
-            query: message,
-            response_mode: "streaming", // or "blocking" based on your preference
-            conversation_id: "", // Optionally manage this on your side
-            user: userId || "default_user",
-            inputs: {} // Additional inputs if needed
-        };
+        const { message } = req.body;
 
         // Make request to Dify API
         const response = await fetch(`${API_BASE_URL}/chat-messages`, {
@@ -43,7 +29,13 @@ app.post('/api/chat', async (req, res) => {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${API_KEY}`
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                inputs: {},
+                query: message,
+                response_mode: "blocking", // or "streaming" if you want to implement streaming
+                conversation_id: conversationId,
+                user: "user-" + Math.random().toString(36).substr(2, 9) // Generate random user ID
+            })
         });
 
         if (!response.ok) {
@@ -51,12 +43,14 @@ app.post('/api/chat', async (req, res) => {
         }
 
         const data = await response.json();
-        const assistantMessage = data.answer;
+        
+        // Store the conversation ID for future messages
+        conversationId = data.conversation_id;
 
-        // Add assistant response to history
-        conversationHistory.push({ role: "assistant", content: assistantMessage });
-
-        res.json({ message: assistantMessage });
+        res.json({ 
+            message: data.answer,
+            metadata: data.metadata
+        });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -66,41 +60,29 @@ app.post('/api/chat', async (req, res) => {
 // Profile endpoint
 app.post('/api/profile', async (req, res) => {
     try {
-        const { profession, domain, description, userId } = req.body;
+        const { profession, domain, description } = req.body;
 
-        const systemPrompt = `You are an AI assistant specializing in providing immediate, actionable advice for ${profession}s. 
-        The user is a ${profession} specializing in ${domain}. Based on their profile, provide:
-        1. Ways AI and AI-Buddy can enhance their efficiency and effectiveness
-        2. Real-world examples of AI implementation in ${domain}
-        3. How AI-Buddy can help them in their ${profession} and ${domain}
-        
-        Important guidelines:
-        - DO NOT ask any questions
-        - Provide comprehensive, direct information
-        - Give specific examples and use cases
-        - Suggest a course from AI-Buddy
-        - Keep the response well-structured with clear sections
-        - Make sure the answer is short.`;
+        // Create the profile message
+        const profileMessage = `I am a ${profession} specializing in ${domain}. ${description} Tell me how AI and AI buddy can help me.`;
 
-        const profileMessage = `I am a ${profession} specializing in ${domain}. ${description}`;
-
-        // Prepare the request payload for Dify
-        const payload = {
-            query: profileMessage,
-            response_mode: "blocking",
-            conversation_id: "",
-            user: userId || "default_user",
-            inputs: {}
-        };
-
-        // Make request to Dify API
+        // Make request to Dify API with custom prompt
         const response = await fetch(`${API_BASE_URL}/chat-messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${API_KEY}`
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                inputs: {
+                    profession: profession,
+                    domain: domain,
+                    description: description
+                },
+                query: profileMessage,
+                response_mode: "blocking",
+                conversation_id: "", // Start a new conversation for profile
+                user: "user-" + Math.random().toString(36).substr(2, 9)
+            })
         });
 
         if (!response.ok) {
@@ -108,16 +90,14 @@ app.post('/api/profile', async (req, res) => {
         }
 
         const data = await response.json();
-        const assistantMessage = data.answer;
+        
+        // Store the new conversation ID
+        conversationId = data.conversation_id;
 
-        // Reset conversation history with the new context
-        conversationHistory = [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: profileMessage },
-            { role: "assistant", content: assistantMessage }
-        ];
-
-        res.json({ message: assistantMessage });
+        res.json({ 
+            message: data.answer,
+            metadata: data.metadata
+        });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Internal server error' });
