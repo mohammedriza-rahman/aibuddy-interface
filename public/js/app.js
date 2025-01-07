@@ -7,10 +7,6 @@ const PROFESSION_DOMAINS = {
     "Other": ["Other"]
 };
 
-// State variables
-let isStreaming = false;
-let currentStreamingMessage = null;
-
 // DOM Elements
 const sidebar = document.getElementById('sidebar');
 const menuBtn = document.getElementById('menuBtn');
@@ -21,13 +17,15 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const messageContainer = document.getElementById('messageContainer');
 const aboutInput = document.getElementById('aboutInput');
-const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
 // Debug log
 console.log('DOM Elements loaded:', {
     sidebar, menuBtn, professionSelect, domainSelect,
-    submitProfile, messageInput, sendBtn, messageContainer, aboutInput, scrollBottomBtn
+    submitProfile, messageInput, sendBtn, messageContainer, aboutInput
 });
+
+// Add at the top with other variables
+let isStreaming = false;
 
 // Create custom input containers
 const customProfessionContainer = document.createElement('div');
@@ -64,53 +62,22 @@ typingIndicator.innerHTML = `
     </div>
 `;
 
-// Scroll functions
-function checkScroll() {
-    const { scrollTop, scrollHeight, clientHeight } = messageContainer;
-    const scrolledFromBottom = scrollHeight - scrollTop - clientHeight;
-    
-    if (scrolledFromBottom > 100) {
-        scrollBottomBtn.classList.add('visible');
-    } else {
-        scrollBottomBtn.classList.remove('visible');
-    }
-}
-
-function scrollToBottom() {
-    messageContainer.scrollTop = messageContainer.scrollHeight;
-    checkScroll();
-}
-
-messageContainer.addEventListener('scroll', checkScroll);
-scrollBottomBtn.addEventListener('click', scrollToBottom);
-window.addEventListener('resize', checkScroll);
-
 // Text streaming function
 function streamText(text, textDiv) {
     return new Promise((resolve) => {
-        if (currentStreamingMessage) {
-            currentStreamingMessage.classList.remove('streaming');
-        }
-        isStreaming = true;
-        currentStreamingMessage = textDiv;
-        
-        const delay = 20;
+        const delay = 20; // milliseconds per character
         let index = 0;
         textDiv.textContent = '';
         textDiv.classList.add('streaming');
         
         function addNextCharacter() {
-            if (index < text.length && isStreaming) {
+            if (index < text.length) {
                 textDiv.textContent += text[index];
                 index++;
                 messageContainer.scrollTop = messageContainer.scrollHeight;
-                checkScroll();
                 setTimeout(addNextCharacter, delay);
             } else {
                 textDiv.classList.remove('streaming');
-                isStreaming = false;
-                currentStreamingMessage = null;
-                checkScroll();
                 resolve();
             }
         }
@@ -201,12 +168,6 @@ function formatText(text) {
 
 // Add message to chat
 async function addMessage(text, isUser = false) {
-    // Cancel any ongoing streaming
-    isStreaming = false;
-    if (currentStreamingMessage) {
-        currentStreamingMessage.classList.remove('streaming');
-    }
-
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
     
@@ -227,39 +188,33 @@ async function addMessage(text, isUser = false) {
     
     messageDiv.appendChild(textDiv);
     messageContainer.appendChild(messageDiv);
-    checkScroll();
 
     if (isUser) {
         textDiv.textContent = text;
-        scrollToBottom();
     } else {
         const formattedText = formatText(text);
         await streamText(formattedText, textDiv);
-        scrollToBottom();
     }
+    
+    messageContainer.scrollTop = messageContainer.scrollHeight;
 }
 
 // Handle sending messages
 async function sendMessage(message, isProfile = false) {
+    if (isStreaming) return;
     if (!message.trim()) return;
-    
-    // Cancel any ongoing streaming
-    isStreaming = false;
-    if (currentStreamingMessage) {
-        currentStreamingMessage.classList.remove('streaming');
-    }
 
-    messageInput.value = '';
+    isStreaming = true;
+    messageInput.disabled = true; // Disable input while streaming
     sendBtn.disabled = true;
     
-    // Remove any existing typing indicators
-    const existingIndicators = messageContainer.querySelectorAll('.typing-indicator');
-    existingIndicators.forEach(indicator => indicator.remove());
+    // messageInput.value = '';
+    // sendBtn.disabled = true;
     
     await addMessage(message, true);
     messageContainer.appendChild(typingIndicator);
     typingIndicator.querySelector('.typing-indicator').classList.add('visible');
-    scrollToBottom();
+    messageContainer.scrollTop = messageContainer.scrollHeight;
     
     try {
         const response = await fetch(isProfile ? '/api/profile' : '/api/chat', {
@@ -299,6 +254,11 @@ async function sendMessage(message, isProfile = false) {
             messageContainer.removeChild(typingIndicator);
         }
         await addMessage('Sorry, I encountered an error. Please try again.');
+    }finally {
+        isStreaming = false;
+        messageInput.disabled = false; // Re-enable input
+        messageInput.focus();
+        sendBtn.disabled = !messageInput.value.trim();
     }
 }
 
@@ -344,7 +304,7 @@ submitProfile.addEventListener('click', async (e) => {
         
         messageContainer.appendChild(typingIndicator);
         typingIndicator.querySelector('.typing-indicator').classList.add('visible');
-        scrollToBottom();
+        messageContainer.scrollTop = messageContainer.scrollHeight;
         
         const response = await fetch('/api/profile', {
             method: 'POST',
