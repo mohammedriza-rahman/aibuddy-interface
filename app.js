@@ -6,11 +6,9 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const app = express();
 const PORT = 3000;
 
-
-// Tasking.ai API configuration
-const API_KEY = "taPxd2jFPxNTTEXZsGAXbRxSgylLsEKi";
-const API_BASE_URL = "https://oapi.tasking.ai/v1";
-const MODEL_ID = "X5lMtrEVvhZuirQGg3aflNOW";
+// Dify API configuration
+const API_KEY = "app-D2IMY0lIHOB3crQGFLfYIpLW";
+const API_BASE_URL = "https://api.dify.ai/v1";
 
 // Store conversation history
 let conversationHistory = [
@@ -24,22 +22,28 @@ app.use(bodyParser.json());
 // Chat endpoint
 app.post('/api/chat', async (req, res) => {
     try {
-        const { message } = req.body;
-        
+        const { message, userId } = req.body;
+
         // Add user message to history
         conversationHistory.push({ role: "user", content: message });
 
-        // Make request to Tasking.ai API
-        const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+        // Prepare the request payload for Dify
+        const payload = {
+            query: message,
+            response_mode: "streaming", // or "blocking" based on your preference
+            conversation_id: "", // Optionally manage this on your side
+            user: userId || "default_user",
+            inputs: {} // Additional inputs if needed
+        };
+
+        // Make request to Dify API
+        const response = await fetch(`${API_BASE_URL}/chat-messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${API_KEY}`
             },
-            body: JSON.stringify({
-                model: MODEL_ID,
-                messages: conversationHistory
-            })
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
@@ -47,8 +51,8 @@ app.post('/api/chat', async (req, res) => {
         }
 
         const data = await response.json();
-        const assistantMessage = data.choices[0].message.content;
-        
+        const assistantMessage = data.answer;
+
         // Add assistant response to history
         conversationHistory.push({ role: "assistant", content: assistantMessage });
 
@@ -62,42 +66,41 @@ app.post('/api/chat', async (req, res) => {
 // Profile endpoint
 app.post('/api/profile', async (req, res) => {
     try {
-        const { profession, domain, description } = req.body;
+        const { profession, domain, description, userId } = req.body;
 
-        // Create specific system prompts based on profession
-        let systemPrompt = `You are an AI assistant specializing in providing immediate, actionable advice for ${profession}s. 
+        const systemPrompt = `You are an AI assistant specializing in providing immediate, actionable advice for ${profession}s. 
         The user is a ${profession} specializing in ${domain}. Based on their profile, provide:
-        1. Ways AI  and AI-buddy can enhance their efficiency and effectiveness
-        2. Real-world examples of AI implementation in ${domain} in short concise answer
-        3. tell them how AI-Buddy can help them in there ${profession} and ${domain}
-
+        1. Ways AI and AI-Buddy can enhance their efficiency and effectiveness
+        2. Real-world examples of AI implementation in ${domain}
+        3. How AI-Buddy can help them in their ${profession} and ${domain}
+        
         Important guidelines:
         - DO NOT ask any questions
         - Provide comprehensive, direct information
         - Give specific examples and use cases
-        - suggest them a course from the AI-buddy
+        - Suggest a course from AI-Buddy
         - Keep the response well-structured with clear sections
-        -make sure the answer is short.
+        - Make sure the answer is short.`;
 
-        Format the response with clear bullet points and sections for readability.`;
+        const profileMessage = `I am a ${profession} specializing in ${domain}. ${description}`;
 
-        // Add user profile to conversation
-        const profileMessage = `I am a ${profession} specializing in ${domain}. ${description} tell me how AI and AI buddy can help me `;
+        // Prepare the request payload for Dify
+        const payload = {
+            query: profileMessage,
+            response_mode: "blocking",
+            conversation_id: "",
+            user: userId || "default_user",
+            inputs: {}
+        };
 
-        // Make request to Tasking.ai API
-        const response = await fetch(`${API_BASE_URL}/chat/completions`, {
+        // Make request to Dify API
+        const response = await fetch(`${API_BASE_URL}/chat-messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${API_KEY}`
             },
-            body: JSON.stringify({
-                model: MODEL_ID,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: profileMessage }
-                ]
-            })
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
@@ -105,8 +108,8 @@ app.post('/api/profile', async (req, res) => {
         }
 
         const data = await response.json();
-        const assistantMessage = data.choices[0].message.content;
-        
+        const assistantMessage = data.answer;
+
         // Reset conversation history with the new context
         conversationHistory = [
             { role: "system", content: systemPrompt },
