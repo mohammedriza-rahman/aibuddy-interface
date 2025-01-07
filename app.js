@@ -7,7 +7,7 @@ const app = express();
 const PORT = 3000;
 
 // Dify API configuration
-const API_KEY = "your_dify_api_key_here";
+const API_KEY = "app-D2IMY0lIHOB3crQGFLfYIpLW";
 const API_BASE_URL = "https://api.dify.ai/v1";
 
 // Store conversation history
