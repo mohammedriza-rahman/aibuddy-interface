@@ -105,6 +105,14 @@ function streamText(text, textDiv) {
         textDiv.textContent = '';
         textDiv.classList.add('streaming');
         
+        function isElementInViewport(el) {
+            const rect = el.getBoundingClientRect();
+            const containerRect = messageContainer.getBoundingClientRect();
+            return (
+                rect.bottom <= containerRect.bottom + 100 // Adding some buffer
+            );
+        }
+        
         function addNextCharacter() {
             if (controller.signal.aborted) {
                 textDiv.classList.remove('streaming');
@@ -115,7 +123,13 @@ function streamText(text, textDiv) {
             if (index < text.length) {
                 textDiv.textContent += text[index];
                 index++;
-                messageContainer.scrollTop = messageContainer.scrollHeight;
+                
+                // Only auto-scroll if user is already near bottom
+                const isNearBottom = messageContainer.scrollHeight - messageContainer.scrollTop - messageContainer.clientHeight < 100;
+                if (isNearBottom || isElementInViewport(textDiv)) {
+                    messageContainer.scrollTop = messageContainer.scrollHeight;
+                }
+                
                 setTimeout(addNextCharacter, delay);
             } else {
                 textDiv.classList.remove('streaming');
