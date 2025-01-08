@@ -38,7 +38,6 @@ scrollDownBtn.addEventListener('click', () => {
     messagesDiv.scrollTo({ top: messagesDiv.scrollHeight, behavior: 'smooth' });
 });
 
-
 // Debug log
 console.log('DOM Elements loaded:', {
     sidebar, menuBtn, professionSelect, domainSelect,
@@ -170,17 +169,17 @@ function formatText(text) {
 
     lines.forEach(line => {
         // Handle numbered sections
-        if (/^\d+\./.test(line)) {
-            formattedText += `• ${line.replace(/^\d+\.\s*/, '')}\n`;
+        if (/^\\d+\\./.test(line)) {
+            formattedText += `• ${line.replace(/^\\d+\\.\\s*/, '')}\\n`;
         }
         // Handle bullet points or subheadings
         else if (line.startsWith('*') || line.includes(':')) {
-            const cleanLine = line.replace(/^\*+\s*/, '').replace(/\*\*/g, '').trim();
-            formattedText += `• ${cleanLine}\n`;
+            const cleanLine = line.replace(/^\\*+\\s*/, '').replace(/\\*\\*/g, '').trim();
+            formattedText += `• ${cleanLine}\\n`;
         }
         // Handle regular text
         else {
-            formattedText += `${line.replace(/\*\*/g, '')}\n`;
+            formattedText += `${line.replace(/\\*\\*/g, '')}\\n`;
         }
     });
 
@@ -229,8 +228,9 @@ async function sendMessage(message, isProfile = false) {
     messageInput.disabled = true; // Disable input while streaming
     sendBtn.disabled = true;
     
-    // messageInput.value = '';
-    // sendBtn.disabled = true;
+    // Clear the input field here
+    messageInput.value = '';
+    sendBtn.disabled = true;
     
     await addMessage(message, true);
     messageContainer.appendChild(typingIndicator);
