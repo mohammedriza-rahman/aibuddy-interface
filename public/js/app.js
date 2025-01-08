@@ -21,6 +21,11 @@ const scrollUpBtn = document.getElementById('scrollUpBtn');
 const scrollDownBtn = document.getElementById('scrollDownBtn');
 const messagesDiv = document.getElementById('messageContainer');
 
+// Streaming control variables
+let isStreaming = false;
+let isMessagePending = false;
+let currentStreamController = null;
+
 // Show/hide scroll buttons based on scroll position
 messagesDiv.addEventListener('scroll', () => {
     const { scrollTop, scrollHeight, clientHeight } = messagesDiv;
@@ -28,25 +33,14 @@ messagesDiv.addEventListener('scroll', () => {
     scrollDownBtn.style.display = scrollTop + clientHeight < scrollHeight - 100 ? 'block' : 'none';
 });
 
-// Scroll to top
+// Scroll controls
 scrollUpBtn.addEventListener('click', () => {
     messagesDiv.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
-// Scroll to bottom
 scrollDownBtn.addEventListener('click', () => {
     messagesDiv.scrollTo({ top: messagesDiv.scrollHeight, behavior: 'smooth' });
 });
-
-
-// Debug log
-console.log('DOM Elements loaded:', {
-    sidebar, menuBtn, professionSelect, domainSelect,
-    submitProfile, messageInput, sendBtn, messageContainer, aboutInput
-});
-
-// Add at the top with other variables
-let isStreaming = false;
 
 // Create custom input containers
 const customProfessionContainer = document.createElement('div');
@@ -69,7 +63,7 @@ customDomainContainer.innerHTML = `
 domainSelect.parentNode.after(customDomainContainer);
 professionSelect.parentNode.after(customProfessionContainer);
 
-// Create typing indicator
+// Create typing indicator with cancel button
 const typingIndicator = document.createElement('div');
 typingIndicator.className = 'message assistant';
 typingIndicator.innerHTML = `
@@ -81,17 +75,43 @@ typingIndicator.innerHTML = `
         <div class="dot"></div>
         <div class="dot"></div>
     </div>
+    <button class="cancel-stream-btn">Stop Generating</button>
 `;
 
-// Text streaming function
+// Function to cancel current stream
+function cancelCurrentStream() {
+    if (currentStreamController) {
+        currentStreamController.abort();
+        currentStreamController = null;
+        isStreaming = false;
+        isMessagePending = false;
+        messageInput.disabled = false;
+        sendBtn.disabled = !messageInput.value.trim();
+        
+        if (messageContainer.contains(typingIndicator)) {
+            messageContainer.removeChild(typingIndicator);
+        }
+    }
+}
+
+// Text streaming function with cancellation support
 function streamText(text, textDiv) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+        const controller = new AbortController();
+        currentStreamController = controller;
+        
         const delay = 20; // milliseconds per character
         let index = 0;
         textDiv.textContent = '';
         textDiv.classList.add('streaming');
         
         function addNextCharacter() {
+            if (controller.signal.aborted) {
+                textDiv.classList.remove('streaming');
+                reject(new Error('Streaming cancelled'));
+                return;
+            }
+            
             if (index < text.length) {
                 textDiv.textContent += text[index];
                 index++;
@@ -99,6 +119,7 @@ function streamText(text, textDiv) {
                 setTimeout(addNextCharacter, delay);
             } else {
                 textDiv.classList.remove('streaming');
+                currentStreamController = null;
                 resolve();
             }
         }
@@ -107,7 +128,7 @@ function streamText(text, textDiv) {
     });
 }
 
-// Toggle Sidebar
+// Sidebar controls
 function closeSidebar() {
     sidebar.classList.remove('open');
 }
@@ -117,11 +138,7 @@ function openSidebar() {
 }
 
 menuBtn.addEventListener('click', () => {
-    if (sidebar.classList.contains('open')) {
-        closeSidebar();
-    } else {
-        openSidebar();
-    }
+    sidebar.classList.toggle('open');
 });
 
 // Click outside sidebar to close
@@ -131,13 +148,20 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Domain selection change handler
+// Click handler for cancel button
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('cancel-stream-btn')) {
+        cancelCurrentStream();
+    }
+});
+
+// Domain selection handler
 domainSelect.addEventListener('change', () => {
     const selectedDomain = domainSelect.value;
     customDomainContainer.style.display = selectedDomain === 'Other' ? 'block' : 'none';
 });
 
-// Profession selection change handler
+// Profession selection handler
 professionSelect.addEventListener('change', () => {
     const profession = professionSelect.value;
     const domains = PROFESSION_DOMAINS[profession] || [];
@@ -163,22 +187,19 @@ professionSelect.addEventListener('change', () => {
     }
 });
 
-// Format text with proper spacing
+// Text formatting
 function formatText(text) {
     const lines = text.split('\n').map(line => line.trim()).filter(line => line);
     let formattedText = '';
 
     lines.forEach(line => {
-        // Handle numbered sections
         if (/^\d+\./.test(line)) {
             formattedText += `• ${line.replace(/^\d+\.\s*/, '')}\n`;
         }
-        // Handle bullet points or subheadings
         else if (line.startsWith('*') || line.includes(':')) {
             const cleanLine = line.replace(/^\*+\s*/, '').replace(/\*\*/g, '').trim();
             formattedText += `• ${cleanLine}\n`;
         }
-        // Handle regular text
         else {
             formattedText += `${line.replace(/\*\*/g, '')}\n`;
         }
@@ -220,24 +241,31 @@ async function addMessage(text, isUser = false) {
     messageContainer.scrollTop = messageContainer.scrollHeight;
 }
 
-// Handle sending messages
+// Send message with queue control
 async function sendMessage(message, isProfile = false) {
-    if (isStreaming) return;
+    if (isStreaming) {
+        // If a message is already streaming, cancel it first
+        cancelCurrentStream();
+        // Small delay to ensure cleanup
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    if (isMessagePending) return;
     if (!message.trim()) return;
 
     isStreaming = true;
-    messageInput.disabled = true; // Disable input while streaming
+    isMessagePending = true;
+    messageInput.disabled = true;
     sendBtn.disabled = true;
     
     messageInput.value = '';
-    sendBtn.disabled = true;
-    
-    await addMessage(message, true);
-    messageContainer.appendChild(typingIndicator);
-    typingIndicator.querySelector('.typing-indicator').classList.add('visible');
-    messageContainer.scrollTop = messageContainer.scrollHeight;
     
     try {
+        await addMessage(message, true);
+        messageContainer.appendChild(typingIndicator);
+        typingIndicator.querySelector('.typing-indicator').classList.add('visible');
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+        
         const response = await fetch(isProfile ? '/api/profile' : '/api/chat', {
             method: 'POST',
             headers: {
@@ -274,16 +302,20 @@ async function sendMessage(message, isProfile = false) {
         if (messageContainer.contains(typingIndicator)) {
             messageContainer.removeChild(typingIndicator);
         }
-        await addMessage('Sorry, I encountered an error. Please try again.');
-    }finally {
+        if (error.message !== 'Streaming cancelled') {
+            await addMessage('Sorry, I encountered an error. Please try again.');
+        }
+    } finally {
         isStreaming = false;
-        messageInput.disabled = false; // Re-enable input
+        isMessagePending = false;
+        messageInput.disabled = false;
         messageInput.focus();
         sendBtn.disabled = !messageInput.value.trim();
+        currentStreamController = null;
     }
 }
 
-// Event Listeners for chat
+// Event listeners for chat
 sendBtn.addEventListener('click', () => {
     const message = messageInput.value.trim();
     if (message) {
@@ -321,35 +353,7 @@ submitProfile.addEventListener('click', async (e) => {
     
     try {
         closeSidebar();
-        await addMessage(profileMessage, true);
-        
-        messageContainer.appendChild(typingIndicator);
-        typingIndicator.querySelector('.typing-indicator').classList.add('visible');
-        messageContainer.scrollTop = messageContainer.scrollHeight;
-        
-        const response = await fetch('/api/profile', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                profession,
-                domain,
-                description: about
-            })
-        });
-        
-        if (messageContainer.contains(typingIndicator)) {
-            messageContainer.removeChild(typingIndicator);
-        }
-        
-        if (!response.ok) {
-            throw new Error('Failed to get response');
-        }
-        
-        const data = await response.json();
-        await addMessage(data.message);
-        messageInput.focus();
+        await sendMessage(profileMessage, true);
         
         // Reset form
         professionSelect.value = '';
@@ -364,17 +368,13 @@ submitProfile.addEventListener('click', async (e) => {
         if (document.getElementById('customDomain')) {
             document.getElementById('customDomain').value = '';
         }
-        
     } catch (error) {
         console.error('Error:', error);
-        if (messageContainer.contains(typingIndicator)) {
-            messageContainer.removeChild(typingIndicator);
-        }
         await addMessage('Sorry, I encountered an error submitting your profile.');
     }
 });
 
-// Disable send button when input is empty
+// Input state management
 messageInput.addEventListener('input', () => {
     sendBtn.disabled = !messageInput.value.trim();
 });
