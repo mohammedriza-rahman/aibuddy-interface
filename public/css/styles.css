@@ -387,3 +387,32 @@ h1, h2, h3 {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+
+.cancel-stream-btn {
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    color: #374151;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 6px 12px;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: all 0.2s ease;
+}
+
+.cancel-stream-btn:hover {
+    background-color: #e5e7eb;
+}
+
+.cancel-stream-btn:active {
+    background-color: #d1d5db;
+}
+
+/* Make sure the typing indicator message has relative positioning */
+.message.assistant {
+    position: relative;
+}
