@@ -11,7 +11,7 @@ const API_KEY = "app-D2IMY0lIHOB3crQGFLfYIpLW";
 const API_BASE_URL = "https://api.dify.ai/v1";
 
 // Store conversation history
-let conversationId = "";
+let conversationId = ""; // Initialize empty conversationId
 
 // Middleware
 app.use(express.static('public'));
@@ -21,6 +21,8 @@ app.use(bodyParser.json());
 app.post('/api/chat', async (req, res) => {
     try {
         const { message } = req.body;
+
+        const userId = "user-123"; // Use a consistent user ID for tracking
 
         // Make request to Dify API
         const response = await fetch(`${API_BASE_URL}/chat-messages`, {
@@ -33,8 +35,8 @@ app.post('/api/chat', async (req, res) => {
                 inputs: {},
                 query: message,
                 response_mode: "blocking", // or "streaming" if you want to implement streaming
-                conversation_id: conversationId,
-                user: "user-" + Math.random().toString(36).substr(2, 9) // Generate random user ID
+                conversation_id: conversationId || "", // Use existing or start a new conversation
+                user: userId
             })
         });
 
@@ -43,7 +45,7 @@ app.post('/api/chat', async (req, res) => {
         }
 
         const data = await response.json();
-        
+
         // Store the conversation ID for future messages
         conversationId = data.conversation_id;
 
@@ -52,7 +54,8 @@ app.post('/api/chat', async (req, res) => {
             metadata: data.metadata
         });
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error details:', error.message);
+        console.error('Stack trace:', error.stack);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -64,6 +67,8 @@ app.post('/api/profile', async (req, res) => {
 
         // Create the profile message
         const profileMessage = `I am a ${profession} specializing in ${domain}. ${description} Tell me how AI and AI buddy can help me.`;
+
+        const userId = "user-123"; // Use a consistent user ID
 
         // Make request to Dify API with custom prompt
         const response = await fetch(`${API_BASE_URL}/chat-messages`, {
@@ -81,7 +86,7 @@ app.post('/api/profile', async (req, res) => {
                 query: profileMessage,
                 response_mode: "blocking",
                 conversation_id: "", // Start a new conversation for profile
-                user: "user-" + Math.random().toString(36).substr(2, 9)
+                user: userId
             })
         });
 
@@ -90,7 +95,7 @@ app.post('/api/profile', async (req, res) => {
         }
 
         const data = await response.json();
-        
+
         // Store the new conversation ID
         conversationId = data.conversation_id;
 
@@ -99,7 +104,8 @@ app.post('/api/profile', async (req, res) => {
             metadata: data.metadata
         });
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error details:', error.message);
+        console.error('Stack trace:', error.stack);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
