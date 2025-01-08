@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
+const session = require('express-session');
 const app = express();
 const PORT = 3000;
 
@@ -10,21 +10,36 @@ const PORT = 3000;
 const API_KEY = "app-D2IMY0lIHOB3crQGFLfYIpLW";
 const API_BASE_URL = "https://api.dify.ai/v1";
 
-// Store conversation history
-let conversationId = ""; // Initialize empty conversationId
+// Session configuration
+app.use(session({
+    secret: 'your-secret-key',  // Change this to a secure secret
+    resave: false,
+    saveUninitialized: true,
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
 
 // Middleware
 app.use(express.static('public'));
 app.use(bodyParser.json());
 
+// Generate unique user ID for new sessions
+app.use((req, res, next) => {
+    if (!req.session.userId) {
+        req.session.userId = 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        req.session.conversationId = '';
+    }
+    next();
+});
+
 // Chat endpoint
 app.post('/api/chat', async (req, res) => {
     try {
         const { message } = req.body;
-
-        const userId = "user-123"; // Use a consistent user ID for tracking
-
-        // Make request to Dify API
+        
+        // Use session-specific userId and conversationId
         const response = await fetch(`${API_BASE_URL}/chat-messages`, {
             method: 'POST',
             headers: {
@@ -34,9 +49,9 @@ app.post('/api/chat', async (req, res) => {
             body: JSON.stringify({
                 inputs: {},
                 query: message,
-                response_mode: "blocking", // or "streaming" if you want to implement streaming
-                conversation_id: conversationId || "", // Use existing or start a new conversation
-                user: userId
+                response_mode: "blocking",
+                conversation_id: req.session.conversationId || "",
+                user: req.session.userId
             })
         });
 
@@ -45,10 +60,10 @@ app.post('/api/chat', async (req, res) => {
         }
 
         const data = await response.json();
-
-        // Store the conversation ID for future messages
-        conversationId = data.conversation_id;
-
+        
+        // Store the conversation ID in the session
+        req.session.conversationId = data.conversation_id;
+        
         res.json({ 
             message: data.answer,
             metadata: data.metadata
@@ -64,13 +79,11 @@ app.post('/api/chat', async (req, res) => {
 app.post('/api/profile', async (req, res) => {
     try {
         const { profession, domain, description } = req.body;
-
-        // Create the profile message
         const profileMessage = `I am a ${profession} specializing in ${domain}. ${description} Tell me how AI and AI buddy can help me.`;
-
-        const userId = "user-123"; // Use a consistent user ID
-
-        // Make request to Dify API with custom prompt
+        
+        // Start a new conversation for profile updates
+        req.session.conversationId = '';
+        
         const response = await fetch(`${API_BASE_URL}/chat-messages`, {
             method: 'POST',
             headers: {
@@ -85,8 +98,8 @@ app.post('/api/profile', async (req, res) => {
                 },
                 query: profileMessage,
                 response_mode: "blocking",
-                conversation_id: "", // Start a new conversation for profile
-                user: userId
+                conversation_id: "",
+                user: req.session.userId
             })
         });
 
@@ -95,10 +108,10 @@ app.post('/api/profile', async (req, res) => {
         }
 
         const data = await response.json();
-
-        // Store the new conversation ID
-        conversationId = data.conversation_id;
-
+        
+        // Store the new conversation ID in the session
+        req.session.conversationId = data.conversation_id;
+        
         res.json({ 
             message: data.answer,
             metadata: data.metadata
