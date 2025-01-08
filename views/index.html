@@ -27,8 +27,9 @@
 
         <!-- Main Chat Area -->
         <div class="main-content">
-            <div class="chat-window">
-                <div class="messages" id="messageContainer">
+            <div class="chat-container">
+                <!-- Messages container -->
+                <div class="messages-container" id="messageContainer">
                     <div class="message assistant">
                         <div class="avatar">
                             <img src="/images/AI-Buddy.png" alt="AI-Buddy">
@@ -36,20 +37,24 @@
                         <div class="text streaming">Hello! How can I assist you today?</div>
                     </div>
                 </div>
-                <div class="input-area">
-                    <input 
-                        type="text" 
-                        id="messageInput" 
-                        placeholder="Type your message..."
-                        aria-label="Message input"
-                    >
-                    <button id="sendBtn" disabled aria-label="Send message">→</button>
+
+                <!-- Fixed input container -->
+                <div class="input-container">
+                    <div class="input-area">
+                        <input 
+                            type="text" 
+                            id="messageInput" 
+                            placeholder="Type your message..."
+                            aria-label="Message input"
+                        >
+                        <button id="sendBtn" disabled aria-label="Send message">→</button>
+                    </div>
                 </div>
 
                 <!-- Scroll Buttons -->
                 <div class="scroll-buttons">
-                    <button id="scrollUpBtn" class="scroll-btn">↑</button>
-                    <button id="scrollDownBtn" class="scroll-btn">↓</button>
+                    <button id="scrollUpBtn" class="scroll-btn" aria-label="Scroll to top">↑</button>
+                    <button id="scrollDownBtn" class="scroll-btn" aria-label="Scroll to bottom">↓</button>
                 </div>
             </div>
         </div>
