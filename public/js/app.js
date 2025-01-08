@@ -229,8 +229,8 @@ async function sendMessage(message, isProfile = false) {
     messageInput.disabled = true; // Disable input while streaming
     sendBtn.disabled = true;
     
-    // messageInput.value = '';
-    // sendBtn.disabled = true;
+    messageInput.value = '';
+    sendBtn.disabled = true;
     
     await addMessage(message, true);
     messageContainer.appendChild(typingIndicator);
